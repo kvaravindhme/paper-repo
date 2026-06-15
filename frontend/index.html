@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Anomaly Bio · Paper Library</title>
+<style>
+  :root {
+    --bg: #0e1116; --panel: #171b22; --panel2: #1e242d; --border: #2a313c;
+    --text: #e6e9ef; --muted: #8b94a3; --accent: #4f9cf9; --accent2: #2563eb;
+    --green: #3fb950; --amber: #d29922; --red: #f85149;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg); color: var(--text); font-size: 15px; line-height: 1.5;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  button {
+    font: inherit; cursor: pointer; border: 1px solid var(--border);
+    background: var(--panel2); color: var(--text); border-radius: 8px;
+    padding: 8px 14px; transition: background .15s;
+  }
+  button:hover { background: #29313c; }
+  button.primary { background: var(--accent2); border-color: var(--accent2); color: #fff; }
+  button.primary:hover { background: #1d4ed8; }
+  button.danger { color: var(--red); }
+  input, textarea, select {
+    font: inherit; background: var(--panel); color: var(--text);
+    border: 1px solid var(--border); border-radius: 8px; padding: 9px 11px; width: 100%;
+  }
+  input:focus, textarea:focus { outline: none; border-color: var(--accent); }
+  .hidden { display: none !important; }
+  header {
+    display: flex; align-items: center; gap: 14px; padding: 14px 22px;
+    border-bottom: 1px solid var(--border); background: var(--panel);
+    position: sticky; top: 0; z-index: 10;
+  }
+  header h1 { font-size: 17px; margin: 0; letter-spacing: .2px; }
+  header .logo { width: 26px; height: 26px; border-radius: 6px;
+    background: linear-gradient(135deg, #4f9cf9, #7c4dff); display:inline-block; }
+  header .spacer { flex: 1; }
+  .who { color: var(--muted); font-size: 13px; }
+  main { max-width: 1080px; margin: 0 auto; padding: 22px; }
+
+  /* Auth */
+  .auth-wrap { max-width: 380px; margin: 8vh auto; }
+  .card { background: var(--panel); border: 1px solid var(--border);
+    border-radius: 14px; padding: 26px; }
+  .card h2 { margin: 0 0 4px; }
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 5px; }
+  .msg { font-size: 13px; margin-top: 10px; min-height: 18px; }
+  .msg.err { color: var(--red); } .msg.ok { color: var(--green); }
+  .switch { text-align: center; margin-top: 16px; font-size: 14px; color: var(--muted); }
+
+  /* Toolbar */
+  .toolbar { display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
+  .toolbar input.search { flex: 1; min-width: 200px; }
+  .stats { color: var(--muted); font-size: 13px; margin-bottom: 14px; }
+
+  /* Paper cards */
+  .paper {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+    padding: 16px 18px; margin-bottom: 14px;
+  }
+  .paper .title { font-size: 16px; font-weight: 600; margin: 0 0 4px; }
+  .paper .meta { color: var(--muted); font-size: 13px; margin-bottom: 8px; }
+  .badges { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0; }
+  .badge {
+    font-size: 12px; padding: 3px 9px; border-radius: 999px;
+    border: 1px solid var(--border); background: var(--panel2); color: var(--muted);
+    display: inline-flex; align-items: center; gap: 5px;
+  }
+  .badge.read { color: var(--green); border-color: #1f5a2b; }
+  .badge.reading { color: var(--amber); border-color: #6b5318; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+  .paper .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+    margin-top: 10px; }
+  .paper .row .spacer { flex: 1; }
+  .abstract { color: var(--muted); font-size: 13.5px; margin: 8px 0 0;
+    max-height: 0; overflow: hidden; transition: max-height .2s; }
+  .abstract.open { max-height: 800px; }
+  .tag { font-size: 12px; color: var(--accent); margin-right: 6px; }
+  select.status { width: auto; padding: 6px 10px; }
+
+  /* Annotations */
+  .annos { margin-top: 12px; border-top: 1px dashed var(--border); padding-top: 12px; }
+  .anno { background: var(--panel2); border-radius: 8px; padding: 9px 12px; margin-bottom: 8px; }
+  .anno .who2 { font-size: 12px; color: var(--accent); margin-bottom: 2px; }
+  .anno .when { font-size: 11px; color: var(--muted); }
+  .anno-add { display: flex; gap: 8px; margin-top: 8px; }
+
+  /* Modal */
+  .overlay { position: fixed; inset: 0; background: rgba(0,0,0,.55);
+    display: flex; align-items: center; justify-content: center; z-index: 50; }
+  .modal { width: 540px; max-width: 92vw; max-height: 88vh; overflow: auto; }
+  .modal h2 { margin-top: 0; }
+  .help { font-size: 12.5px; color: var(--muted); margin-top: 6px; }
+  .keybox { background: var(--panel2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 12px; font-family: ui-monospace, monospace;
+    font-size: 12.5px; word-break: break-all; }
+  .small { font-size: 12px; color: var(--muted); }
+  .empty { text-align: center; color: var(--muted); padding: 50px 0; }
+</style>
+</head>
+<body>
+
+<!-- ===================== AUTH VIEW ===================== -->
+<div id="authView">
+  <div class="auth-wrap">
+    <div class="card">
+      <div style="text-align:center; margin-bottom:18px;">
+        <span class="logo" style="width:38px;height:38px;"></span>
+        <h2 style="margin-top:10px;">Anomaly Bio</h2>
+        <div class="small">Shared paper library</div>
+      </div>
+      <div id="loginForm">
+        <div class="field"><label>Email</label>
+          <input id="loginEmail" type="email" placeholder="you@anomalybio.com" /></div>
+        <div class="field"><label>Password</label>
+          <input id="loginPass" type="password" placeholder="••••••••" /></div>
+        <button class="primary" style="width:100%" onclick="doLogin()">Log in</button>
+        <div class="msg" id="loginMsg"></div>
+        <div class="switch">No account yet?
+          <a href="#" onclick="showSignup();return false;">Create one</a></div>
+      </div>
+      <div id="signupForm" class="hidden">
+        <div class="field"><label>Name</label>
+          <input id="suName" placeholder="Your name" /></div>
+        <div class="field"><label>Email (@anomalybio.com)</label>
+          <input id="suEmail" type="email" placeholder="you@anomalybio.com" /></div>
+        <div class="field"><label>Password (min 8 chars)</label>
+          <input id="suPass" type="password" placeholder="••••••••" /></div>
+        <div class="field" id="inviteField"><label>Invite code (if required)</label>
+          <input id="suInvite" placeholder="Leave blank if not used" /></div>
+        <button class="primary" style="width:100%" onclick="doSignup()">Create account</button>
+        <div class="msg" id="suMsg"></div>
+        <div class="switch">Already have an account?
+          <a href="#" onclick="showLogin();return false;">Log in</a></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== APP VIEW ===================== -->
+<div id="appView" class="hidden">
+  <header>
+    <span class="logo"></span>
+    <h1>Anomaly Bio · Paper Library</h1>
+    <span class="spacer"></span>
+    <span class="who" id="whoami"></span>
+    <button onclick="openKeyModal()">Claude / API key</button>
+    <button onclick="doLogout()">Log out</button>
+  </header>
+  <main>
+    <div class="toolbar">
+      <input class="search" id="search" placeholder="Search title, author, abstract, tags…"
+             oninput="renderDebounced()" />
+      <button class="primary" onclick="openAddModal()">+ Add paper</button>
+    </div>
+    <div class="stats" id="stats"></div>
+    <div id="list"></div>
+  </main>
+</div>
+
+<!-- Add modal -->
+<div id="addModal" class="overlay hidden">
+  <div class="card modal">
+    <h2>Add a paper</h2>
+    <div class="field">
+      <label>DOI, PubMed ID, arXiv ID, or URL</label>
+      <input id="addId" placeholder="10.1038/s41586-020-2649-2  ·  34320281  ·  https://…" />
+      <div class="help">Paste an identifier and click Fetch — title, authors, journal,
+        year and abstract are filled in automatically. You can also edit fields by hand.</div>
+    </div>
+    <div style="display:flex; gap:8px; margin-bottom:14px;">
+      <button onclick="doFetch()" id="fetchBtn">Fetch metadata</button>
+      <span class="msg" id="fetchMsg" style="align-self:center;"></span>
+    </div>
+    <div class="field"><label>Title</label><input id="fTitle" /></div>
+    <div class="field"><label>Authors</label><input id="fAuthors" /></div>
+    <div style="display:flex; gap:10px;">
+      <div class="field" style="flex:2"><label>Journal</label><input id="fJournal" /></div>
+      <div class="field" style="flex:1"><label>Year</label><input id="fYear" type="number" /></div>
+    </div>
+    <div style="display:flex; gap:10px;">
+      <div class="field" style="flex:1"><label>DOI</label><input id="fDoi" /></div>
+      <div class="field" style="flex:1"><label>URL</label><input id="fUrl" /></div>
+    </div>
+    <div class="field"><label>Tags (comma separated)</label>
+      <input id="fTags" placeholder="oncology, single-cell, method" /></div>
+    <div class="field"><label>My reading status</label>
+      <select id="fStatus" class="status" style="width:100%">
+        <option value="unread">Unread</option>
+        <option value="reading">I'm reading this</option>
+        <option value="read">I've read this</option>
+      </select></div>
+    <div class="field"><label>Abstract</label><textarea id="fAbstract" rows="4"></textarea></div>
+    <div style="display:flex; gap:8px; justify-content:flex-end;">
+      <button onclick="closeAddModal()">Cancel</button>
+      <button class="primary" onclick="doAdd()">Add to library</button>
+    </div>
+    <div class="msg" id="addMsg"></div>
+  </div>
+</div>
+
+<!-- API key modal -->
+<div id="keyModal" class="overlay hidden">
+  <div class="card modal">
+    <h2>Connect Claude to your library</h2>
+    <p class="small">This is your personal API key. The Claude MCP connector uses it
+      to search, read, add papers, and write annotations on your behalf. Keep it private —
+      anyone with this key can act as you.</p>
+    <div class="keybox" id="keyValue">—</div>
+    <div style="display:flex; gap:8px; margin-top:12px;">
+      <button onclick="copyKey()">Copy key</button>
+      <button class="danger" onclick="regenKey()">Regenerate</button>
+      <span class="spacer" style="flex:1"></span>
+      <button onclick="closeKeyModal()">Done</button>
+    </div>
+    <p class="help" style="margin-top:16px;">Setup instructions for the connector are in
+      <code>README.md</code> → “Connect Claude”. You'll paste this key and your library URL
+      into the MCP config.</p>
+  </div>
+</div>
+
+<script>
+const API = location.origin.includes("file://") ? "http://localhost:8000" : "";
+let session = null;     // {token, name, email, api_key}
+let papers = [];
+let openAbstracts = new Set();
+let openAnnos = new Set();
+
+// ---------- session persistence (in-memory only per tab) ----------
+function saveSession(s){ session = s; }
+function authHeaders(){ return session ? {"Authorization":"Bearer "+session.token} : {}; }
+
+async function api(path, opts={}){
+  const headers = Object.assign(
+    {"Content-Type":"application/json"}, authHeaders(), opts.headers||{});
+  const r = await fetch(API+path, Object.assign({}, opts, {headers}));
+  let data = null; try { data = await r.json(); } catch(e){}
+  if(!r.ok){ throw new Error((data && data.detail) || ("Error "+r.status)); }
+  return data;
+}
+
+// ---------- auth ----------
+function showSignup(){ q("#loginForm").classList.add("hidden"); q("#signupForm").classList.remove("hidden"); }
+function showLogin(){ q("#signupForm").classList.add("hidden"); q("#loginForm").classList.remove("hidden"); }
+
+async function doSignup(){
+  const msg = q("#suMsg"); msg.textContent=""; msg.className="msg";
+  try{
+    const body = {
+      name: q("#suName").value, email: q("#suEmail").value,
+      password: q("#suPass").value, invite_code: q("#suInvite").value };
+    const s = await api("/api/signup", {method:"POST", body:JSON.stringify(body)});
+    saveSession(s); enterApp();
+  }catch(e){ msg.textContent=e.message; msg.className="msg err"; }
+}
+async function doLogin(){
+  const msg = q("#loginMsg"); msg.textContent=""; msg.className="msg";
+  try{
+    const body = {email:q("#loginEmail").value, password:q("#loginPass").value};
+    const s = await api("/api/login", {method:"POST", body:JSON.stringify(body)});
+    saveSession(s); enterApp();
+  }catch(e){ msg.textContent=e.message; msg.className="msg err"; }
+}
+async function doLogout(){
+  try{ await api("/api/logout",{method:"POST"}); }catch(e){}
+  session=null; q("#appView").classList.add("hidden"); q("#authView").classList.remove("hidden");
+}
+
+function enterApp(){
+  q("#authView").classList.add("hidden");
+  q("#appView").classList.remove("hidden");
+  q("#whoami").textContent = session.name + " · " + session.email;
+  loadPapers();
+}
+
+// ---------- papers ----------
+async function loadPapers(){
+  try{
+    const data = await api("/api/papers");
+    papers = data.papers; render();
+  }catch(e){ q("#list").innerHTML = `<div class="empty">${e.message}</div>`; }
+}
+
+let renderTimer=null;
+function renderDebounced(){ clearTimeout(renderTimer); renderTimer=setTimeout(render,150); }
+
+function render(){
+  const term = q("#search").value.trim().toLowerCase();
+  let shown = papers;
+  if(term){
+    shown = papers.filter(p =>
+      [(p.title||""),(p.authors||""),(p.abstract||""),(p.tags||""),(p.journal||"")]
+      .join(" ").toLowerCase().includes(term));
+  }
+  const unreadByMe = papers.filter(p =>
+    !p.reading_status.some(s => s.email===session.email)).length;
+  q("#stats").textContent =
+    `${papers.length} papers in library · ${unreadByMe} you haven't opened` +
+    (term ? ` · ${shown.length} match "${term}"` : "");
+
+  if(shown.length===0){
+    q("#list").innerHTML = `<div class="empty">No papers yet. Click “+ Add paper” to start.</div>`;
+    return;
+  }
+  q("#list").innerHTML = shown.map(renderPaper).join("");
+}
+
+function statusBadge(s){
+  const cls = s.status==="read" ? "read" : s.status==="reading" ? "reading" : "";
+  const verb = s.status==="read" ? "read" : "reading";
+  return `<span class="badge ${cls}"><span class="dot"></span>${esc(s.name)} ${verb}</span>`;
+}
+
+function renderPaper(p){
+  const myStatus = (p.reading_status.find(s=>s.email===session.email)||{}).status || "unread";
+  const badges = p.reading_status.map(statusBadge).join("") ||
+    `<span class="badge">Nobody has opened this yet</span>`;
+  const tags = (p.tags||"").split(",").map(t=>t.trim()).filter(Boolean)
+    .map(t=>`<span class="tag">#${esc(t)}</span>`).join("");
+  const absOpen = openAbstracts.has(p.id) ? "open" : "";
+  const meta = [p.authors, p.journal, p.year].filter(Boolean).map(esc).join(" · ");
+  return `
+  <div class="paper">
+    <div class="title">${esc(p.title)}</div>
+    <div class="meta">${meta||"—"}</div>
+    <div class="badges">${badges}</div>
+    <div>${tags}</div>
+    ${p.abstract ? `<div class="abstract ${absOpen}" id="abs-${p.id}">${esc(p.abstract)}</div>
+      <a href="#" onclick="toggleAbs(${p.id});return false;" class="small">
+        ${absOpen?"Hide":"Show"} abstract</a>` : ""}
+    <div class="row">
+      <label class="small">My status:</label>
+      <select class="status" onchange="setStatus(${p.id}, this.value)">
+        <option value="unread" ${myStatus==="unread"?"selected":""}>Unread</option>
+        <option value="reading" ${myStatus==="reading"?"selected":""}>Reading</option>
+        <option value="read" ${myStatus==="read"?"selected":""}>Read</option>
+      </select>
+      ${p.url?`<a href="${esc(p.url)}" target="_blank">Open ↗</a>`:""}
+      ${p.doi?`<a href="https://doi.org/${esc(p.doi)}" target="_blank">DOI</a>`:""}
+      <span class="spacer"></span>
+      <button onclick="toggleAnnos(${p.id})">Notes (${p.annotation_count})</button>
+      <button class="danger" onclick="delPaper(${p.id})">Remove</button>
+    </div>
+    <div class="small" style="margin-top:6px;">Added by ${esc(p.added_by||"—")}</div>
+    <div class="annos ${openAnnos.has(p.id)?"":"hidden"}" id="annos-${p.id}"></div>
+  </div>`;
+}
+
+function toggleAbs(id){ openAbstracts.has(id)?openAbstracts.delete(id):openAbstracts.add(id); render(); }
+
+async function setStatus(id, status){
+  try{ await api(`/api/papers/${id}/status`,{method:"POST",body:JSON.stringify({status})});
+    await loadPapers(); }catch(e){ alert(e.message); }
+}
+async function delPaper(id){
+  if(!confirm("Remove this paper from the shared library for everyone?")) return;
+  try{ await api(`/api/papers/${id}`,{method:"DELETE"}); await loadPapers(); }
+  catch(e){ alert(e.message); }
+}
+
+// ---------- annotations ----------
+async function toggleAnnos(id){
+  const el = q(`#annos-${id}`);
+  if(openAnnos.has(id)){ openAnnos.delete(id); el.classList.add("hidden"); return; }
+  openAnnos.add(id); el.classList.remove("hidden");
+  try{
+    const p = await api(`/api/papers/${id}`);
+    el.innerHTML = (p.annotations||[]).map(a=>`
+      <div class="anno">
+        <div class="who2">${esc(a.author||"—")}</div>
+        <div>${esc(a.body)}</div>
+        <div class="when">${fmt(a.created_at)}
+          ${a.author===session.name?`· <a href="#" onclick="delAnno(${a.id},${id});return false;">delete</a>`:""}</div>
+      </div>`).join("") +
+      `<div class="anno-add">
+         <input id="annoInput-${id}" placeholder="Add a note / annotation…" />
+         <button class="primary" onclick="addAnno(${id})">Post</button>
+       </div>`;
+  }catch(e){ el.innerHTML = `<div class="small">${e.message}</div>`; }
+}
+async function addAnno(id){
+  const inp = q(`#annoInput-${id}`); const body = inp.value.trim();
+  if(!body) return;
+  try{ await api(`/api/papers/${id}/annotations`,{method:"POST",body:JSON.stringify({body})});
+    await loadPapers(); await toggleAnnos(id); openAnnos.add(id);
+    q(`#annos-${id}`).classList.remove("hidden");
+  }catch(e){ alert(e.message); }
+}
+async function delAnno(aid, pid){
+  try{ await api(`/api/annotations/${aid}`,{method:"DELETE"});
+    openAnnos.delete(pid); await loadPapers(); }catch(e){ alert(e.message); }
+}
+
+// ---------- add modal ----------
+function openAddModal(){ q("#addModal").classList.remove("hidden"); }
+function closeAddModal(){
+  q("#addModal").classList.add("hidden");
+  ["addId","fTitle","fAuthors","fJournal","fYear","fDoi","fUrl","fTags","fAbstract"]
+    .forEach(id=>q("#"+id).value="");
+  q("#addMsg").textContent=""; q("#fetchMsg").textContent="";
+}
+async function doFetch(){
+  const m = q("#fetchMsg"); m.textContent="Fetching…"; m.className="msg";
+  try{
+    const d = await api("/api/parse",{method:"POST",
+      body:JSON.stringify({identifier:q("#addId").value})});
+    q("#fTitle").value=d.title||""; q("#fAuthors").value=d.authors||"";
+    q("#fJournal").value=d.journal||""; q("#fYear").value=d.year||"";
+    q("#fDoi").value=d.doi||""; q("#fUrl").value=d.url||"";
+    q("#fAbstract").value=d.abstract||"";
+    m.textContent="Found via "+(d.source||"lookup"); m.className="msg ok";
+  }catch(e){ m.textContent=e.message; m.className="msg err"; }
+}
+async function doAdd(){
+  const msg = q("#addMsg"); msg.textContent=""; msg.className="msg";
+  const body = {
+    identifier: q("#addId").value || null,
+    title: q("#fTitle").value || null, authors: q("#fAuthors").value || null,
+    journal: q("#fJournal").value || null,
+    year: q("#fYear").value ? parseInt(q("#fYear").value) : null,
+    doi: q("#fDoi").value || null, url: q("#fUrl").value || null,
+    tags: q("#fTags").value || null, abstract: q("#fAbstract").value || null,
+    status: q("#fStatus").value };
+  try{
+    const r = await api("/api/papers",{method:"POST",body:JSON.stringify(body)});
+    if(r.duplicate){ msg.textContent="Already in the library — no duplicate added.";
+      msg.className="msg ok"; await loadPapers(); return; }
+    closeAddModal(); await loadPapers();
+  }catch(e){ msg.textContent=e.message; msg.className="msg err"; }
+}
+
+// ---------- API key modal ----------
+function openKeyModal(){ q("#keyValue").textContent=session.api_key; q("#keyModal").classList.remove("hidden"); }
+function closeKeyModal(){ q("#keyModal").classList.add("hidden"); }
+function copyKey(){ navigator.clipboard.writeText(session.api_key); }
+async function regenKey(){
+  if(!confirm("Regenerate your API key? The old key (and any Claude connector using it) will stop working.")) return;
+  try{ const r = await api("/api/regenerate-key",{method:"POST"});
+    session.api_key=r.api_key; q("#keyValue").textContent=r.api_key; }
+  catch(e){ alert(e.message); }
+}
+
+// ---------- utils ----------
+function q(s){ return document.querySelector(s); }
+function esc(s){ return (s==null?"":String(s)).replace(/[&<>"']/g,
+  c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function fmt(iso){ try{ return new Date(iso).toLocaleString(); }catch(e){ return iso; } }
+</script>
+</body>
+</html>

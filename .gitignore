@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+.venv/
+backend/paperrepo.db
+backend/*.db
+data/
+.DS_Store

@@ -1,0 +1,27 @@
+# One-click deploy config for Render (https://render.com).
+# In Render: New + → Blueprint → connect the repo containing this file.
+services:
+  - type: web
+    name: anomaly-paper-repo
+    runtime: python
+    plan: free
+    rootDir: backend
+    # Copy the sibling frontend into the backend dir so the server always finds
+    # it, no matter how the host lays out the checkout.
+    buildCommand: pip install -r requirements.txt && rm -rf ./frontend && cp -r ../frontend ./frontend
+    startCommand: uvicorn app:app --host 0.0.0.0 --port $PORT
+    disk:
+      # Persists the SQLite database across restarts/redeploys.
+      name: paperrepo-data
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: PAPERREPO_DB
+        value: /var/data/paperrepo.db
+      - key: PAPERREPO_ALLOWED_DOMAINS
+        value: anomalybio.com
+      - key: PAPERREPO_CONTACT_EMAIL
+        value: team@anomalybio.com
+      # Optional: set a shared invite code so only people with it can sign up.
+      # - key: PAPERREPO_INVITE_CODE
+      #   value: change-me
