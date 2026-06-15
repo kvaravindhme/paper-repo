@@ -12,14 +12,12 @@ services:
     # runtime, so a copy hiccup must never fail the whole build.
     buildCommand: pip install -r requirements.txt && (rm -rf ./frontend && cp -r ../frontend ./frontend || true)
     startCommand: uvicorn app:app --host 0.0.0.0 --port $PORT
-    disk:
-      # Persists the SQLite database across restarts/redeploys.
-      name: paperrepo-data
-      mountPath: /var/data
-      sizeGB: 1
+    # NOTE: Free plan = no persistent disk. The SQLite database lives on
+    # temporary storage and is WIPED whenever Render restarts/redeploys the
+    # service. Fine for testing. To make data persist, switch `plan` to
+    # `starter` and re-add a `disk:` block mounted at /var/data, pointing
+    # PAPERREPO_DB there.
     envVars:
-      - key: PAPERREPO_DB
-        value: /var/data/paperrepo.db
       - key: PAPERREPO_ALLOWED_DOMAINS
         value: anomalybio.com
       - key: PAPERREPO_CONTACT_EMAIL
