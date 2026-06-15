@@ -8,7 +8,9 @@ services:
     rootDir: backend
     # Copy the sibling frontend into the backend dir so the server always finds
     # it, no matter how the host lays out the checkout.
-    buildCommand: pip install -r requirements.txt && rm -rf ./frontend && cp -r ../frontend ./frontend
+    # The copy is best-effort (|| true): the app also locates ../frontend at
+    # runtime, so a copy hiccup must never fail the whole build.
+    buildCommand: pip install -r requirements.txt && (rm -rf ./frontend && cp -r ../frontend ./frontend || true)
     startCommand: uvicorn app:app --host 0.0.0.0 --port $PORT
     disk:
       # Persists the SQLite database across restarts/redeploys.
